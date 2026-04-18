@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+  SSAC Backend Checkstyle 설정
+  규칙 변경 시 docs/conventions.md 와 동기화하라.
+  에러 발생 시 remediation: docs/conventions.md 참고
+-->
+<module name="Checker">
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java"/>
+
+    <!-- [LINT-004] 파일 인코딩 -->
+    <property name="charset" value="UTF-8"/>
+
+    <module name="TreeWalker">
+
+        <!-- [LINT-004] 네이밍 규칙: 클래스는 PascalCase -->
+        <module name="TypeName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+            <message key="name.invalidPattern"
+                value="[LINT-004] 클래스명 ''{0}''은 PascalCase여야 합니다. remediation: 첫 글자를 대문자로 시작하는 PascalCase로 변경하세요. 참고: docs/conventions.md"/>
+        </module>
+
+        <!-- [LINT-004] 네이밍 규칙: 메서드/변수는 camelCase -->
+        <module name="MethodName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+            <message key="name.invalidPattern"
+                value="[LINT-004] 메서드명 ''{0}''은 camelCase여야 합니다. remediation: 소문자로 시작하는 camelCase로 변경하세요. 참고: docs/conventions.md"/>
+        </module>
+
+        <!-- [LINT-004] 상수는 UPPER_SNAKE_CASE -->
+        <module name="ConstantName">
+            <property name="format" value="^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$"/>
+            <message key="name.invalidPattern"
+                value="[LINT-004] 상수명 ''{0}''은 UPPER_SNAKE_CASE여야 합니다. remediation: 대문자와 언더스코어만 사용하세요. 참고: docs/conventions.md"/>
+        </module>
+
+        <!-- [LINT-005] 빈 catch 블록 금지 -->
+        <module name="EmptyCatchBlock">
+            <property name="exceptionVariableName" value="expected|ignore"/>
+            <message key="catch.block.empty"
+                value="[LINT-005] 빈 catch 블록은 허용되지 않습니다. remediation: 예외를 로깅하거나 BusinessException으로 변환하세요. 참고: docs/conventions.md#예외-처리"/>
+        </module>
+
+        <!-- 기본 코드 품질 -->
+        <module name="UnusedImports"/>
+        <module name="RedundantImport"/>
+
+    </module>
+</module>
