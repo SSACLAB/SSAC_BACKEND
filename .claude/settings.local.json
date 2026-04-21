@@ -14,7 +14,8 @@
       "Bash(xargs cat:*)",
       "Bash(mysql --version)",
       "Bash(application-local.properties)",
-      "Bash(.gitignore)"
+      "Bash(.gitignore)",
+      "Bash(./gradlew test:*)"
     ]
   }
 }

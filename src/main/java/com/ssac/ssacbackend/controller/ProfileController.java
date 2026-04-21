@@ -1,0 +1,88 @@
+package com.ssac.ssacbackend.controller;
+
+import com.ssac.ssacbackend.common.response.ApiResponse;
+import com.ssac.ssacbackend.dto.request.UpdateNicknameRequest;
+import com.ssac.ssacbackend.dto.response.ProfileResponse;
+import com.ssac.ssacbackend.service.ProfileService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * 프로필 조회 및 닉네임 수정 엔드포인트.
+ *
+ * <p>모든 요청은 유효한 JWT Bearer 토큰이 있어야 한다.
+ */
+@Slf4j
+@Tag(name = "Profile", description = "프로필 조회 및 수정 API")
+@RestController
+@RequestMapping("/api/v1/users/me")
+@RequiredArgsConstructor
+public class ProfileController {
+
+    private final ProfileService profileService;
+
+    @Operation(
+        summary = "내 프로필 조회",
+        description = """
+            [호출 화면] 마이페이지 진입 시
+            [권한 조건] 로그인 필수 (JWT Bearer 토큰)
+            [특이 동작] 토큰의 이메일로 사용자를 식별하며 타인 프로필 조회 불가
+            """,
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200", description = "프로필 조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404", description = "사용자를 찾을 수 없음")
+    })
+    @GetMapping
+    public ResponseEntity<ApiResponse<ProfileResponse>> getProfile(
+        Authentication authentication) {
+        log.debug("프로필 조회 요청: email={}", authentication.getName());
+        ProfileResponse profile = profileService.getProfile(authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success(profile));
+    }
+
+    @Operation(
+        summary = "닉네임 수정",
+        description = """
+            [호출 화면] 마이페이지 > 닉네임 수정
+            [권한 조건] 로그인 필수 (JWT Bearer 토큰)
+            [특이 동작] 닉네임 중복 시 409, 유효성 검사 실패 시 400 반환.
+            닉네임 정책: 2~20자, 한글/영문/숫자/언더스코어/하이픈만 허용
+            """,
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200", description = "닉네임 수정 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400", description = "닉네임 유효성 검사 실패"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404", description = "사용자를 찾을 수 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "409", description = "이미 사용 중인 닉네임")
+    })
+    @PatchMapping("/nickname")
+    public ResponseEntity<ApiResponse<ProfileResponse>> updateNickname(
+        Authentication authentication,
+        @RequestBody @Valid UpdateNicknameRequest request) {
+        log.debug("닉네임 수정 요청: email={}", authentication.getName());
+        ProfileResponse profile =
+            profileService.updateNickname(authentication.getName(), request.nickname());
+        return ResponseEntity.ok(ApiResponse.success(profile));
+    }
+}
