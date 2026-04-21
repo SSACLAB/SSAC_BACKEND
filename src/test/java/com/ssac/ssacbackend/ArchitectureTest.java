@@ -36,8 +36,11 @@ class ArchitectureTest {
     @Test
     @DisplayName("레이어 의존성 방향 규칙")
     void layerDependencyRule() {
+        // consideringAllDependencies()를 사용하면 외부 라이브러리(java.*, Spring, Lombok 등)도
+        // 레이어 위반으로 판단하여 정상 코드가 모두 실패한다.
+        // 애플리케이션 레이어 간 의존성만 검사하는 기본 모드(consideringOnlyDependenciesInLayers)를 사용한다.
         layeredArchitecture()
-            .consideringAllDependencies()
+            .consideringOnlyDependenciesInLayers()
             .layer("Controller").definedBy(BASE_PACKAGE + ".controller..")
             .layer("Service").definedBy(BASE_PACKAGE + ".service..")
             .layer("Repository").definedBy(BASE_PACKAGE + ".repository..")

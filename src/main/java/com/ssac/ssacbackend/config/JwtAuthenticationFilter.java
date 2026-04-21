@@ -1,0 +1,58 @@
+package com.ssac.ssacbackend.config;
+
+import com.ssac.ssacbackend.service.JwtService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Collections;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+/**
+ * JWT Bearer 토큰을 검증하고 SecurityContext에 인증 정보를 설정하는 필터.
+ *
+ * <p>유효한 토큰이 있으면 이메일을 principal로 하는 Authentication을 등록한다.
+ * 토큰이 없거나 유효하지 않으면 인증 없이 다음 필터로 넘기며,
+ * Spring Security의 권한 검사에서 401로 거부된다.
+ *
+ * <p>변경 기준: docs/decisions/004-swagger-contract.md, SecurityConfig
+ */
+@Slf4j
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final String BEARER_PREFIX = "Bearer ";
+
+    private final JwtService jwtService;
+
+    @Override
+    protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain) throws ServletException, IOException {
+
+        String token = extractToken(request);
+        if (token != null && jwtService.isTokenValid(token)) {
+            String email = jwtService.extractEmail(token);
+            UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            log.debug("JWT 인증 완료: email={}", email);
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith(BEARER_PREFIX)) {
+            return header.substring(BEARER_PREFIX.length());
+        }
+        return null;
+    }
+}
