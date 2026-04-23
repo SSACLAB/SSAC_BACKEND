@@ -1,7 +1,6 @@
 package com.ssac.ssacbackend.config;
 
 import com.ssac.ssacbackend.service.JwtService;
-import com.ssac.ssacbackend.service.JwtService.TokenInfo;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
