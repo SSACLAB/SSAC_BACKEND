@@ -93,4 +93,11 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
      * guestId로 응시 기록을 조회한다. Guest → User 전환 시 데이터 마이그레이션에 사용한다.
      */
     List<QuizAttempt> findByGuestId(String guestId);
+
+    /**
+     * 사용자의 응시 기록이 하나라도 존재하는지 확인한다. 신규 사용자 판별에 사용한다.
+     *
+     * @param email 사용자 이메일
+     */
+    boolean existsByUserEmail(String email);
 }
