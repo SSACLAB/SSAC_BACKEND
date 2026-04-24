@@ -7,6 +7,8 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,8 +38,9 @@ public class JwtService {
     /**
      * JWT에서 추출한 인증 주체 정보.
      * GUEST 토큰은 principal이 guestId(UUID), USER/ADMIN은 email이다.
+     * issuedAt은 토큰 발급 시각으로, DB의 invalidatedBefore와 비교하여 로그아웃 여부를 판단한다.
      */
-    public record TokenInfo(String principal, String role) {}
+    public record TokenInfo(String principal, String role, LocalDateTime issuedAt) {}
 
 
     private final SecretKey secretKey;
@@ -95,7 +98,11 @@ public class JwtService {
             if (principal == null || role == null) {
                 return Optional.empty();
             }
-            return Optional.of(new TokenInfo(principal, role));
+            LocalDateTime issuedAt = claims.getIssuedAt()
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+            return Optional.of(new TokenInfo(principal, role, issuedAt));
         } catch (JwtException e) {
             log.warn("유효하지 않은 JWT 토큰: {}", e.getMessage());
             return Optional.empty();

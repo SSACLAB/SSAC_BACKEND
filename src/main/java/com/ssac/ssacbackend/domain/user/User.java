@@ -56,6 +56,13 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    /**
+     * 이 시각 이전에 발급된 Access Token은 무효 처리된다.
+     * 로그아웃 시 현재 시각으로 갱신하여 기존 토큰을 일괄 차단한다.
+     */
+    @Column
+    private LocalDateTime invalidatedBefore;
+
     @Builder
     public User(String email, String password, String nickname, String provider,
         String providerId, UserRole role) {
@@ -72,6 +79,21 @@ public class User {
      */
     public void updateNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    /**
+     * 사용자 권한을 변경한다. 변경된 권한은 필터의 DB 조회로 다음 요청부터 즉시 반영된다.
+     */
+    public void updateRole(UserRole newRole) {
+        this.role = newRole;
+    }
+
+    /**
+     * 현재 시각을 invalidatedBefore로 설정하여 이전에 발급된 모든 Access Token을 무효화한다.
+     * 로그아웃 시 호출한다.
+     */
+    public void invalidateTokens() {
+        this.invalidatedBefore = LocalDateTime.now();
     }
 
     @PrePersist
