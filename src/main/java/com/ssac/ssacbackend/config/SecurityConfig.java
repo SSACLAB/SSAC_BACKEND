@@ -1,5 +1,6 @@
 package com.ssac.ssacbackend.config;
 
+import com.ssac.ssacbackend.repository.UserRepository;
 import com.ssac.ssacbackend.service.CustomOAuth2UserService;
 import com.ssac.ssacbackend.service.JwtService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -45,7 +46,8 @@ public class SecurityConfig {
     };
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtService jwtService)
+    public SecurityFilterChain filterChain(
+        HttpSecurity http, JwtService jwtService, UserRepository userRepository)
         throws Exception {
         return http
             .csrf(AbstractHttpConfigurer::disable)
@@ -53,6 +55,8 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_PATHS).permitAll()
+                // 관리자 전용: 사용자 목록 조회 및 권한 관리
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 // 퀴즈 제출: 비회원(GUEST)도 허용
                 .requestMatchers(HttpMethod.POST, "/api/v1/quiz-attempts")
                     .hasAnyRole("USER", "GUEST", "ADMIN")
@@ -84,7 +88,7 @@ public class SecurityConfig {
             )
             .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(
-                new JwtAuthenticationFilter(jwtService),
+                new JwtAuthenticationFilter(jwtService, userRepository),
                 UsernamePasswordAuthenticationFilter.class
             )
             .build();

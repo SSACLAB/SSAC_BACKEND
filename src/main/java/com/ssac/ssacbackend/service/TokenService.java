@@ -76,13 +76,21 @@ public class TokenService {
     }
 
     /**
-     * Refresh Token을 무효화하여 로그아웃 처리한다.
+     * Refresh Token을 무효화하고, 해당 사용자의 Access Token도 일괄 차단하여 로그아웃 처리한다.
+     *
+     * <p>user.invalidateTokens()를 호출해 invalidatedBefore를 현재 시각으로 갱신한다.
+     * JwtAuthenticationFilter는 이후 요청에서 토큰의 iat와 이 값을 비교해 이전 토큰을 차단한다.
      */
     public void logout(String rawRefreshToken) {
         String tokenHash = hashToken(rawRefreshToken);
         refreshTokenRepository.findByTokenHashAndRevokedFalse(tokenHash)
             .ifPresent(token -> {
                 token.revoke();
+                userRepository.findById(token.getUserId())
+                    .ifPresent(user -> {
+                        user.invalidateTokens();
+                        log.info("Access Token 무효화 완료: userId={}", user.getId());
+                    });
                 log.info("로그아웃 처리 완료: userId={}", token.getUserId());
             });
     }
