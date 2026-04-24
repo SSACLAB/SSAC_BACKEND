@@ -63,6 +63,9 @@ public class SecurityConfig {
                 // 퀴즈 기록/통계 조회: 로그인 회원만 허용
                 .requestMatchers(HttpMethod.GET, "/api/v1/quiz-attempts", "/api/v1/quiz-attempts/**")
                     .hasAnyRole("USER", "ADMIN")
+                // 개인화 추천: 로그인 회원만 허용 (GUEST 차단)
+                .requestMatchers(HttpMethod.GET, "/api/v1/recommendations")
+                    .hasAnyRole("USER", "ADMIN")
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
