@@ -48,8 +48,10 @@ dependencies {
     // flyway-core만 선언 시 FlywayAutoConfiguration이 로드되지 않아 마이그레이션 미실행
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
     implementation 'org.flywaydb:flyway-mysql'
-    // Cloudinary SDK (이미지 업로드)
-    implementation 'com.cloudinary:cloudinary-http44:1.38.0'
+    // Cloudflare R2 SDK (이미지 업로드) — R2는 S3 호환 API라 AWS SDK v2 S3 클라이언트를 사용한다.
+    // AWS 계정/과금과는 무관하며 endpoint만 R2로 재정의한다 (config/R2Config 참고).
+    implementation platform('software.amazon.awssdk:bom:2.29.52')
+    implementation 'software.amazon.awssdk:s3'
     // Notion SDK (콘텐츠 동기화)
     implementation 'com.github.seratch:notion-sdk-jvm-core:1.1.0'
     implementation 'com.github.seratch:notion-sdk-jvm-okhttp4:1.1.0'

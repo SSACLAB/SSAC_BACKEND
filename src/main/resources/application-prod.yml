@@ -78,11 +78,13 @@ naver:
     client-secret: ${NAVER_CLIENT_SECRET}
     redirect-uri: ${NAVER_REDIRECT_URI}
 
-# ── Cloudinary ────────────────────────────────────────────────────────────────
-cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME}
-  api-key: ${CLOUDINARY_API_KEY}
-  api-secret: ${CLOUDINARY_API_SECRET}
+# ── Cloudflare R2 ─────────────────────────────────────────────────────────────
+r2:
+  account-id: ${R2_ACCOUNT_ID}
+  access-key-id: ${R2_ACCESS_KEY_ID}
+  secret-access-key: ${R2_SECRET_ACCESS_KEY}
+  bucket-name: ${R2_BUCKET_NAME}
+  public-base-url: ${R2_PUBLIC_BASE_URL}
 
 # ── Notion ─────────────────────────────────────────────────────────────────────
 notion:
