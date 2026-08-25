@@ -51,6 +51,27 @@ public class NotionImageMigrator {
         if (imageUrl == null || isAlreadyMigrated(imageUrl)) {
             return imageUrl;
         }
+        return uploadToR2(imageUrl);
+    }
+
+    /**
+     * Phase 3 배치 마이그레이션 전용 — 과거 Cloudinary 자산을 R2로 강제 이전한다.
+     *
+     * <p>{@link #migrateIfNeeded}와 달리 과거 Cloudinary URL을 "이미 마이그레이션됨"으로
+     * 스킵하지 않는다 — 이 메서드 자체가 그 Cloudinary URL을 R2로 옮기는 목적이기 때문이다.
+     * 이미 R2 URL인 경우(배치 재실행 시 중복 업로드 방지)에만 스킵한다.
+     *
+     * @param imageUrl 원본 URL (null 허용)
+     * @return R2 URL, 또는 이미 R2 URL이거나 마이그레이션 실패 시 원본 URL
+     */
+    public String forceMigrateLegacy(String imageUrl) {
+        if (imageUrl == null || isAlreadyOnR2(imageUrl)) {
+            return imageUrl;
+        }
+        return uploadToR2(imageUrl);
+    }
+
+    private String uploadToR2(String imageUrl) {
         try {
             Downloaded downloaded = download(imageUrl);
             String key = FOLDER + "/" + UUID.randomUUID() + extensionOf(downloaded.contentType());
@@ -74,8 +95,11 @@ public class NotionImageMigrator {
     }
 
     private boolean isAlreadyMigrated(String imageUrl) {
-        return imageUrl.contains(LEGACY_CLOUDINARY_HOST)
-            || (!publicBaseUrl.isBlank() && imageUrl.startsWith(publicBaseUrl));
+        return imageUrl.contains(LEGACY_CLOUDINARY_HOST) || isAlreadyOnR2(imageUrl);
+    }
+
+    private boolean isAlreadyOnR2(String imageUrl) {
+        return !publicBaseUrl.isBlank() && imageUrl.startsWith(publicBaseUrl);
     }
 
     private Downloaded download(String imageUrl) throws IOException, InterruptedException {
