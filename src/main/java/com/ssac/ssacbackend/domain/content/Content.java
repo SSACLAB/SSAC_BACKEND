@@ -52,6 +52,10 @@ public class Content {
     @Column(name = "thumbnail_url", length = 1000)
     private String thumbnailUrl;
 
+    /** R2 마이그레이션 이전 원본(Cloudinary) 썸네일 URL 백업. 롤백/감사 목적으로만 사용한다. */
+    @Column(name = "thumbnail_url_legacy", length = 1000)
+    private String thumbnailUrlLegacy;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "content_categories", joinColumns = @JoinColumn(name = "content_id"))
     @Column(name = "category", length = 50)
@@ -116,6 +120,19 @@ public class Content {
         this.notionLastEditedAt = notionLastEditedAt;
         this.publishedAt = publishedAt;
         this.syncedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Cloudinary → R2 배치 마이그레이션 시 썸네일 URL을 R2 URL로 교체한다.
+     *
+     * <p>원본(Cloudinary) URL은 최초 1회만 {@code thumbnailUrlLegacy}에 백업하여,
+     * 배치가 재실행되어도 진짜 원본이 덮어써지지 않도록 한다.
+     */
+    public void backfillThumbnailToR2(String r2ThumbnailUrl) {
+        if (this.thumbnailUrlLegacy == null) {
+            this.thumbnailUrlLegacy = this.thumbnailUrl;
+        }
+        this.thumbnailUrl = r2ThumbnailUrl;
     }
 
     /**

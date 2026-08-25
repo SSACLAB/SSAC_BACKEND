@@ -109,6 +109,14 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
 
     Page<Content> findAllByOrderByNotionLastEditedAtDesc(Pageable pageable);
 
+    // ── R2 배치 마이그레이션 (Phase 3) ──────────────────────────────────────────
+
+    /**
+     * 썸네일 URL에 특정 호스트 문자열을 포함하는 콘텐츠를 조회한다.
+     * Cloudinary → R2 배치 마이그레이션 대상(과거 Cloudinary 자산) 조회에 사용한다.
+     */
+    List<Content> findAllByThumbnailUrlContaining(String host);
+
     // ── 검색 ───────────────────────────────────────────────────────────────────
 
     /**

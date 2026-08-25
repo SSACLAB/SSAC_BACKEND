@@ -3,7 +3,9 @@ package com.ssac.ssacbackend.controller;
 import com.ssac.ssacbackend.common.response.ApiResponse;
 import com.ssac.ssacbackend.dto.response.ContentMonitoringListResponse;
 import com.ssac.ssacbackend.dto.response.ContentSyncResponse;
+import com.ssac.ssacbackend.dto.response.ThumbnailMigrationResponse;
 import com.ssac.ssacbackend.service.NotionSyncService;
+import com.ssac.ssacbackend.service.ThumbnailR2MigrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminContentController {
 
     private final NotionSyncService notionSyncService;
+    private final ThumbnailR2MigrationService thumbnailR2MigrationService;
 
     @Operation(
         summary = "콘텐츠 모니터링 목록 조회",
@@ -73,6 +76,26 @@ public class AdminContentController {
     public ResponseEntity<ApiResponse<ContentSyncResponse>> sync(Authentication authentication) {
         log.info("관리자 수동 동기화 요청: admin={}", authentication.getName());
         ContentSyncResponse response = notionSyncService.syncAll();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Operation(
+        summary = "Cloudinary → R2 썸네일 배치 마이그레이션 (1회성)",
+        description = "[권한 조건] ADMIN 역할 전용. 과거 Cloudinary 썸네일 자산을 R2로 옮기고"
+            + " 원본 URL을 thumbnail_url_legacy에 백업한다. 재실행해도 이미 옮겨진 항목은 건너뛴다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200", description = "마이그레이션 실행 완료 (개별 실패는 failedCount로 집계)"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "403", description = "ADMIN 권한 없음")
+    })
+    @PostMapping("/thumbnails/migrate-legacy")
+    public ResponseEntity<ApiResponse<ThumbnailMigrationResponse>> migrateLegacyThumbnails(
+        Authentication authentication) {
+        log.info("관리자 썸네일 R2 배치 마이그레이션 요청: admin={}", authentication.getName());
+        ThumbnailMigrationResponse response = thumbnailR2MigrationService.migrateLegacyThumbnails();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

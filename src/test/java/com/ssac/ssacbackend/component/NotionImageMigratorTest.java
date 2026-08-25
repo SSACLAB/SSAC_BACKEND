@@ -130,4 +130,51 @@ class NotionImageMigratorTest {
             assertThat(migrator.migrateIfNeeded(originalUrl)).isEqualTo(originalUrl);
         }
     }
+
+    @Nested
+    @DisplayName("forceMigrateLegacy — Phase 3 배치 마이그레이션")
+    class ForceMigrateLegacyCases {
+
+        @Test
+        @DisplayName("과거 Cloudinary URL도 R2로 강제 이전한다 (migrateIfNeeded와의 핵심 차이)")
+        void 과거_Cloudinary_URL도_R2로_강제_이전() throws Exception {
+            setBucketConfig();
+            String cloudinaryUrl = "https://res.cloudinary.com/demo/image/upload/sample.png";
+
+            when(httpResponse.statusCode()).thenReturn(200);
+            when(httpResponse.body()).thenReturn(new byte[] {1, 2, 3});
+            when(httpResponse.headers()).thenReturn(
+                HttpHeaders.of(Map.of("Content-Type", List.of("image/png")), (a, b) -> true));
+            when(httpClient.<byte[]>send(any(), any())).thenReturn(httpResponse);
+            when(r2Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
+                .thenReturn((PutObjectResponse) PutObjectResponse.builder().build());
+
+            String result = migrator.forceMigrateLegacy(cloudinaryUrl);
+
+            assertThat(result).startsWith(PUBLIC_BASE_URL + "/content-thumbnails/").endsWith(".png");
+            assertThat(result).isNotEqualTo(cloudinaryUrl);
+        }
+
+        @Test
+        @DisplayName("이미 R2 URL이면 그대로 반환 (배치 재실행 시 중복 업로드 방지)")
+        void 이미_R2_URL이면_그대로_반환() throws Exception {
+            setBucketConfig();
+            String r2Url = PUBLIC_BASE_URL + "/content-thumbnails/sample.jpg";
+
+            assertThat(migrator.forceMigrateLegacy(r2Url)).isEqualTo(r2Url);
+            verify(httpClient, never()).send(any(), any());
+        }
+
+        @Test
+        @DisplayName("다운로드 실패 시 원본 URL 반환 (다음 배치 실행에서 재시도 가능하도록)")
+        void 다운로드_실패_시_원본_URL_반환() throws Exception {
+            setBucketConfig();
+            String cloudinaryUrl = "https://res.cloudinary.com/demo/image/upload/broken.png";
+
+            when(httpResponse.statusCode()).thenReturn(404);
+            when(httpClient.<byte[]>send(any(), any())).thenReturn(httpResponse);
+
+            assertThat(migrator.forceMigrateLegacy(cloudinaryUrl)).isEqualTo(cloudinaryUrl);
+        }
+    }
 }
