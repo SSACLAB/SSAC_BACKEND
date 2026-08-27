@@ -1497,3 +1497,22 @@ HomeService가 RedisTemplate\<String, Object\>에 GenericJackson2JsonRedisSerial
 
 ### 감사 완료 시각
 2026-06-12
+
+---
+
+## ✅ [ADR] 2026-08-27 — ADR-005: 이미지 저장소를 Cloudinary에서 Cloudflare R2로 전환
+
+### ADR 정보
+- 트리거: 기술 의사결정 (이미지 저장소 전면 교체)
+- 핵심 결정: Cloudinary → Cloudflare R2(S3 호환 API, AWS SDK v2 재사용, egress 무료)로 전환.
+  실시간 마이그레이션(`NotionImageMigrator`)과 레거시 배치 마이그레이션
+  (`ThumbnailR2MigrationService`) 둘 다 적용, 프론트엔드 `next.config.ts`/CSP도 `img.ssac.io`로 갱신.
+- 프로덕션 검증: 전체 콘텐츠 23건 썸네일 + 샘플 상세 이미지 블록 5건 모두 R2 전환 확인,
+  `res.cloudinary.com` 잔존 0건.
+
+### 프로토콜 갱신 필요 항목
+- 없음
+
+### 백로그 SC 등록 필요 항목
+- Cloudinary 계정/API 키(`CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET`) 정리 (Railway 환경변수 제거 +
+  Cloudinary 대시보드 키 폐기) — ADR-005 "향후 검토 필요 항목" 참고, 사용자 측 수동 작업 필요
