@@ -1,5 +1,8 @@
 # ADR-002: S3 대신 Cloudinary 선택
 
+> **[2026-08-27] [[ADR-005-cloudflare-r2-migration.md|ADR-005]]에 의해 대체됨.**
+> 스토리지/전송량 비용 트레이드오프(아래 "향후 검토 필요 항목" 참고)로 Cloudflare R2로 전환했다.
+
 ## 맥락 (Context)
 Notion 데이터베이스와 콘텐츠를 동기화할 때
 콘텐츠 썸네일 이미지를 Notion 페이지의 URL로 저장했다.
